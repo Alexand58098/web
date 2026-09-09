@@ -1,0 +1,6 @@
+{
+  "name": "Cucina: Modern Recipes & Cooking Guide",
+  "description": "An inspiring culinary website featuring curated recipes, interactive step-by-step cook mode with kitchen timers, dynamic ingredient serving scaler, pantry matcher, and culinary guides.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
