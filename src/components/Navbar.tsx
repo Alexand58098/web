@@ -1,182 +1,330 @@
 import React from 'react';
-import { ChefHat, BookOpen, Refrigerator, Wrench, Bookmark, ShoppingBag, Plus } from 'lucide-react';
+import { 
+  BookOpen, 
+  Bookmark, 
+  PenSquare, 
+  Search, 
+  Moon, 
+  Sun, 
+  X, 
+  Menu, 
+  Compass, 
+  Shield, 
+  ShieldCheck, 
+  Sparkles,
+  Crown
+} from 'lucide-react';
+import { SiteSettings } from '../types';
 
 interface NavbarProps {
-  activeTab: 'recipes' | 'pantry' | 'tools' | 'cookbook';
-  setActiveTab: (tab: 'recipes' | 'pantry' | 'tools' | 'cookbook') => void;
-  savedCount: number;
-  shoppingListCount: number;
-  openShoppingList: () => void;
-  openAddRecipe: () => void;
-  useMetric: boolean;
-  setUseMetric: (val: boolean) => void;
+  currentView: 'home' | 'bookmarks' | 'admin';
+  setCurrentView: (view: 'home' | 'bookmarks' | 'admin') => void;
+  bookmarksCount: number;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  isDarkMode: boolean;
+  setIsDarkMode: (dark: boolean) => void;
+  onOpenNewArticle: () => void;
+  isAdmin: boolean;
+  onOpenAdminLogin: () => void;
+  onExitAdmin: () => void;
+  siteSettings: SiteSettings;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  setActiveTab,
-  savedCount,
-  shoppingListCount,
-  openShoppingList,
-  openAddRecipe,
-  useMetric,
-  setUseMetric,
+  currentView,
+  setCurrentView,
+  bookmarksCount,
+  searchQuery,
+  setSearchQuery,
+  isDarkMode,
+  setIsDarkMode,
+  onOpenNewArticle,
+  isAdmin,
+  onOpenAdminLogin,
+  onExitAdmin,
+  siteSettings
 }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+
   return (
-    <header className="sticky top-0 z-30 bg-[#FBF9F5]/90 backdrop-blur-md border-b border-stone-200/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <div 
-            id="brand-logo-btn"
-            onClick={() => setActiveTab('recipes')} 
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            <div className="w-11 h-11 rounded-xl bg-amber-700 text-amber-50 flex items-center justify-center shadow-md shadow-amber-900/10 group-hover:bg-amber-800 transition-colors">
-              <ChefHat className="w-6 h-6 text-amber-100" />
+    <>
+      {/* Optional Top Announcement Bar */}
+      {siteSettings.announcement?.enabled && siteSettings.announcement.text && (
+        <div className="bg-amber-500 text-stone-950 py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 border-b border-amber-600/30">
+          <Sparkles className="w-3.5 h-3.5 shrink-0" />
+          <span>{siteSettings.announcement.text}</span>
+          {siteSettings.announcement.linkText && (
+            <span className="underline mr-2 cursor-pointer">{siteSettings.announcement.linkText}</span>
+          )}
+        </div>
+      )}
+
+      <header className={`sticky top-0 z-40 transition-colors duration-200 border-b backdrop-blur-md ${
+        isDarkMode 
+          ? 'bg-stone-950/85 border-stone-800 text-stone-100' 
+          : 'bg-white/85 border-stone-200/80 text-stone-900'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-18 gap-4">
+            
+            {/* Logo & Brand */}
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setCurrentView('home')}
+                className="flex items-center gap-3 text-right group focus:outline-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xl font-bold tracking-tight block font-arabic leading-none">
+                    {siteSettings.siteTitle || 'مَقَالَات'}
+                  </span>
+                  <span className="text-[11px] text-stone-500 dark:text-stone-400 block mt-1 font-arabic">
+                    {siteSettings.siteSlogan || 'منصة الفكر والمعرفة'}
+                  </span>
+                </div>
+              </button>
+
+              {/* Desktop Navigation Links */}
+              <nav className="hidden md:flex items-center gap-1 mr-4">
+                <button
+                  onClick={() => setCurrentView('home')}
+                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    currentView === 'home'
+                      ? isDarkMode ? 'bg-stone-800 text-amber-400' : 'bg-stone-100 text-stone-900 font-semibold'
+                      : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100/50 dark:hover:bg-stone-800/50'
+                  }`}
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>استكشف المقالات</span>
+                </button>
+
+                <button
+                  onClick={() => setCurrentView('bookmarks')}
+                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    currentView === 'bookmarks'
+                      ? isDarkMode ? 'bg-stone-800 text-amber-400' : 'bg-stone-100 text-stone-900 font-semibold'
+                      : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100/50 dark:hover:bg-stone-800/50'
+                  }`}
+                >
+                  <Bookmark className="w-4 h-4" />
+                  <span>قائمتي المحفوظة</span>
+                  {bookmarksCount > 0 && (
+                    <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
+                      {bookmarksCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Admin Dashboard Navigation Tab */}
+                {isAdmin ? (
+                  <button
+                    onClick={() => setCurrentView('admin')}
+                    className={`px-3.5 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 ${
+                      currentView === 'admin'
+                        ? 'bg-amber-500 text-stone-950 shadow-xs'
+                        : 'text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
+                    }`}
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span>لوحة تحكم المسؤول</span>
+                  </button>
+                ) : null}
+              </nav>
             </div>
-            <div>
-              <span className="font-serif text-2xl font-bold tracking-tight text-stone-900 flex items-center gap-1.5">
-                Cucina
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block mb-1"></span>
-              </span>
-              <p className="text-[11px] font-medium uppercase tracking-widest text-stone-500">
-                Culinary Studio &amp; Cook Guide
-              </p>
+
+            {/* Search Bar - Desktop */}
+            <div className="hidden lg:flex flex-1 max-w-md mx-4">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="ابحث في العناوين، الكلمات المفتاحية، أو الكُتّاب..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full py-2 pl-4 pr-10 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/50 ${
+                    isDarkMode 
+                      ? 'bg-stone-900 border border-stone-800 text-stone-100 placeholder-stone-500' 
+                      : 'bg-stone-100/80 border border-stone-200 text-stone-900 placeholder-stone-400 focus:bg-white'
+                  }`}
+                />
+                <Search className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Right Action Buttons */}
+            <div className="flex items-center gap-2">
+              
+              {/* Mobile Search Toggle */}
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="lg:hidden p-2 rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                title="بحث"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+
+              {/* Admin Button */}
+              {isAdmin ? (
+                <div className="hidden sm:flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400">
+                  <ShieldCheck className="w-4 h-4 text-amber-500" />
+                  <button
+                    onClick={() => setCurrentView('admin')}
+                    className="hover:underline"
+                  >
+                    المسؤول
+                  </button>
+                  <button
+                    onClick={onExitAdmin}
+                    className="mr-1 text-stone-400 hover:text-rose-500 text-[10px]"
+                    title="الخروج من وضع المسؤول"
+                  >
+                    (خروج)
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onOpenAdminLogin}
+                  className="p-2 rounded-xl text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center gap-1.5 text-xs font-medium"
+                  title="دخول المشرف / المسؤول للتحكم بالموقع"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span className="hidden xl:inline">لوحة الإدارة</span>
+                </button>
+              )}
+
+              {/* Dark / Light Toggle */}
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                title={isDarkMode ? 'الوضع النهاري' : 'الوضع الليلي'}
+              >
+                {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+              </button>
+
+              {/* Write Article Button */}
+              <button
+                onClick={onOpenNewArticle}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-stone-950 font-medium text-sm transition-all shadow-sm active:scale-95"
+              >
+                <PenSquare className="w-4 h-4" />
+                <span>اكتب مقالاً</span>
+              </button>
+
+              {/* Mobile Menu Hamburger */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 
-          {/* Nav Tabs */}
-          <nav className="hidden md:flex items-center gap-1 bg-stone-100/80 p-1.5 rounded-xl border border-stone-200/70">
-            <button
-              id="nav-recipes-btn"
-              onClick={() => setActiveTab('recipes')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'recipes'
-                  ? 'bg-white text-stone-900 shadow-xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
-              }`}
-            >
-              <BookOpen className="w-4 h-4 text-amber-700" />
-              <span>Recipes</span>
-            </button>
+          {/* Mobile Search Input Drawer */}
+          {isSearchOpen && (
+            <div className="lg:hidden py-3 border-t border-stone-200 dark:border-stone-800">
+              <div className="relative">
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="ابحث في المقالات..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full py-2 pl-4 pr-10 rounded-xl text-sm ${
+                    isDarkMode 
+                      ? 'bg-stone-900 border border-stone-800 text-stone-100' 
+                      : 'bg-stone-100 border border-stone-200 text-stone-900'
+                  }`}
+                />
+                <Search className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+          )}
 
-            <button
-              id="nav-pantry-btn"
-              onClick={() => setActiveTab('pantry')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'pantry'
-                  ? 'bg-white text-stone-900 shadow-xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
-              }`}
-            >
-              <Refrigerator className="w-4 h-4 text-emerald-700" />
-              <span>Pantry Matcher</span>
-            </button>
-
-            <button
-              id="nav-tools-btn"
-              onClick={() => setActiveTab('tools')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'tools'
-                  ? 'bg-white text-stone-900 shadow-xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
-              }`}
-            >
-              <Wrench className="w-4 h-4 text-blue-700" />
-              <span>Kitchen Guide</span>
-            </button>
-
-            <button
-              id="nav-cookbook-btn"
-              onClick={() => setActiveTab('cookbook')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'cookbook'
-                  ? 'bg-white text-stone-900 shadow-xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
-              }`}
-            >
-              <Bookmark className="w-4 h-4 text-amber-600" />
-              <span>My Cookbook</span>
-              {savedCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800">
-                  {savedCount}
+          {/* Mobile Menu Drawer */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden py-4 border-t border-stone-200 dark:border-stone-800 space-y-2">
+              <button
+                onClick={() => {
+                  setCurrentView('home');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-right px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between hover:bg-stone-100 dark:hover:bg-stone-800"
+              >
+                <span className="flex items-center gap-2">
+                  <Compass className="w-4 h-4" />
+                  استكشف المقالات
                 </span>
-              )}
-            </button>
-          </nav>
+              </button>
 
-          {/* Actions & Utilities */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Metric/Imperial toggle */}
-            <button
-              id="unit-toggle-btn"
-              onClick={() => setUseMetric(!useMetric)}
-              title={useMetric ? "Switch to Imperial (oz, cups, °F)" : "Switch to Metric (g, ml, °C)"}
-              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 transition-colors shadow-2xs"
-            >
-              {useMetric ? 'Metric (g, °C)' : 'US (oz, °F)'}
-            </button>
-
-            {/* Add Custom Recipe */}
-            <button
-              id="create-recipe-btn"
-              onClick={openAddRecipe}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-900 text-white hover:bg-stone-800 transition-colors shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Recipe</span>
-            </button>
-
-            {/* Shopping List Button */}
-            <button
-              id="open-shopping-list-btn"
-              onClick={openShoppingList}
-              className="relative p-2.5 rounded-xl border border-stone-200 bg-white text-stone-700 hover:text-amber-800 hover:border-amber-300 transition-all shadow-2xs"
-              title="View Shopping Grocery List"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              {shoppingListCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-amber-700 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs">
-                  {shoppingListCount}
+              <button
+                onClick={() => {
+                  setCurrentView('bookmarks');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-right px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between hover:bg-stone-100 dark:hover:bg-stone-800"
+              >
+                <span className="flex items-center gap-2">
+                  <Bookmark className="w-4 h-4" />
+                  قائمتي المحفوظة
                 </span>
-              )}
-            </button>
-          </div>
-        </div>
+                {bookmarksCount > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 font-bold">
+                    {bookmarksCount}
+                  </span>
+                )}
+              </button>
 
-        {/* Mobile Sub Navigation Bar */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-stone-200 text-xs">
-          <button
-            onClick={() => setActiveTab('recipes')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 ${activeTab === 'recipes' ? 'text-amber-800 font-bold' : 'text-stone-500'}`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Recipes</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('pantry')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 ${activeTab === 'pantry' ? 'text-emerald-800 font-bold' : 'text-stone-500'}`}
-          >
-            <Refrigerator className="w-4 h-4" />
-            <span>Pantry</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('tools')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 ${activeTab === 'tools' ? 'text-blue-800 font-bold' : 'text-stone-500'}`}
-          >
-            <Wrench className="w-4 h-4" />
-            <span>Guide</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('cookbook')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 ${activeTab === 'cookbook' ? 'text-amber-800 font-bold' : 'text-stone-500'}`}
-          >
-            <Bookmark className="w-4 h-4" />
-            <span>Saved ({savedCount})</span>
-          </button>
+              {isAdmin ? (
+                <button
+                  onClick={() => {
+                    setCurrentView('admin');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-right px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                >
+                  <Crown className="w-4 h-4" />
+                  <span>لوحة تحكم المسؤول</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    onOpenAdminLogin();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-right px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>تسجيل دخول المسؤول</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  onOpenNewArticle();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-right px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950"
+              >
+                <PenSquare className="w-4 h-4" />
+                <span>اكتب مقالاً جديداً</span>
+              </button>
+            </div>
+          )}
+
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };

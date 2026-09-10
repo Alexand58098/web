@@ -1,6 +1,6 @@
 {
-  "name": "Cucina: Modern Recipes & Cooking Guide",
-  "description": "NexusOS Web Desktop Operating System with dynamic Windows 10, Windows 7 Aero, and Ubuntu Linux environments, featuring genuine x86 WebAssembly operating systems including KolibriOS, Alpine Linux Kernel, FreeDOS, Windows 98, and custom ISO booting for GitHub Pages.",
+  "name": "موقع مقالات — منصة المقالات والنشر الرقمي",
+  "description": "منصة مقالات وقراءة حديثة مبنية بالكامل من الصفر، تدعم تصفح وقراءة المقالات، محرر نشر غني، تفاعل بالتعليقات، أوضاع قراءة مخصصة، وحفظ المفضلات.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

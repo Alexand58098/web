@@ -1,97 +1,73 @@
-export type MealCategory =
-  | 'all'
-  | 'mains'
-  | 'quick'
-  | 'pasta'
-  | 'healthy'
-  | 'desserts'
-  | 'soups'
-  | 'breakfast';
+export type Category = string;
 
-export type DietaryTag =
-  | 'Vegetarian'
-  | 'Vegan'
-  | 'Gluten-Free'
-  | 'Dairy-Free'
-  | 'High-Protein'
-  | 'Low-Carb'
-  | 'One-Pot'
-  | 'Comfort Food'
-  | 'Healthy'
-  | 'Quick & Easy';
-
-export type IngredientCategory =
-  | 'Produce'
-  | 'Meat & Seafood'
-  | 'Dairy & Eggs'
-  | 'Pantry & Grains'
-  | 'Spices & Herbs'
-  | 'Baking & Sweeteners';
-
-export interface Ingredient {
+export interface Author {
   id: string;
   name: string;
-  baseAmount: number; // Base quantity for base servings
-  unit: string;
-  metricAmount?: number;
-  metricUnit?: string;
-  imperialAmount?: number;
-  imperialUnit?: string;
-  category: IngredientCategory;
-  notes?: string;
+  role: string;
+  avatar: string;
+  bio: string;
 }
 
-export interface InstructionStep {
-  stepNumber: number;
-  title: string;
-  instruction: string;
-  timerSeconds?: number;
-  timerLabel?: string;
-  tip?: string;
+export interface Comment {
+  id: string;
+  authorName: string;
+  authorAvatar?: string;
+  content: string;
+  createdAt: string;
+  likes: number;
 }
 
-export interface Recipe {
+export interface Article {
   id: string;
   title: string;
-  subtitle: string;
-  description: string;
-  category: MealCategory;
-  prepTime: number; // minutes
-  cookTime: number; // minutes
-  totalTime: number; // minutes
-  servings: number; // default baseline (usually 4)
-  difficulty: 'Easy' | 'Medium' | 'Advanced';
-  rating: number;
-  reviewsCount: number;
-  imageUrl: string;
-  tags: DietaryTag[];
-  caloriesPerServing: number;
-  macros: {
-    protein: number; // grams
-    carbs: number; // grams
-    fat: number; // grams
-  };
-  ingredients: Ingredient[];
-  instructions: InstructionStep[];
-  chefAdvice: string;
-  wineOrDrinkPairing?: string;
-  isCustom?: boolean;
-  createdAt?: string;
+  slug: string;
+  excerpt: string;
+  content: string; // Structured text with markdown-like headings, quotes, and takeaways
+  coverImage: string;
+  category: Category;
+  tags: string[];
+  author: Author;
+  publishedAt: string;
+  readTime: number; // in minutes
+  views: number;
+  likes: number;
+  featured?: boolean;
+  comments: Comment[];
 }
 
-export interface ShoppingItem {
+export type ReadingTheme = 'light' | 'sepia' | 'dark';
+export type ReadingFontSize = 'sm' | 'md' | 'lg' | 'xl';
+export type ReadingFontFamily = 'arabic-modern' | 'arabic-traditional' | 'arabic-sans';
+
+export interface ReadingPreferences {
+  theme: ReadingTheme;
+  fontSize: ReadingFontSize;
+  fontFamily: ReadingFontFamily;
+}
+
+export interface AnnouncementBanner {
+  enabled: boolean;
+  text: string;
+  linkText?: string;
+  linkUrl?: string;
+}
+
+export interface SiteSettings {
+  siteTitle: string;
+  siteSlogan: string;
+  siteDescription: string;
+  announcement: AnnouncementBanner;
+  footerText: string;
+  enableComments: boolean;
+  enableAudioReader: boolean;
+  allowPublicSubmissions?: boolean;
+}
+
+export interface NewsletterSubscriber {
   id: string;
-  recipeId?: string;
-  recipeTitle?: string;
-  name: string;
-  amount: string;
-  category: IngredientCategory;
-  checked: boolean;
+  email: string;
+  subscribedAt: string;
 }
 
-export interface CookLog {
-  recipeId: string;
-  date: string;
-  rating?: number;
-  notes?: string;
-}
+export type AdminTab = 'overview' | 'articles' | 'categories' | 'comments' | 'subscribers' | 'settings';
+

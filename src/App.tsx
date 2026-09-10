@@ -1,582 +1,611 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Search,
-  Filter,
-  Sparkles,
-  Flame,
-  Clock,
-  ChefHat,
-  Heart,
-  SlidersHorizontal,
-  RotateCcw,
-  CheckCircle2,
-  X,
-  ArrowRight,
-} from 'lucide-react';
-import { Recipe, MealCategory, DietaryTag, ShoppingItem, CookLog, IngredientCategory } from './types';
-import { INITIAL_RECIPES } from './data/recipes';
+import { Article, Category, Comment, SiteSettings, NewsletterSubscriber } from './types';
+import { INITIAL_ARTICLES } from './data/articles';
 import { Navbar } from './components/Navbar';
-import { RecipeCard } from './components/RecipeCard';
-import { RecipeDetailModal } from './components/RecipeDetailModal';
-import { CookModeModal } from './components/CookModeModal';
-import { PantryMatcher } from './components/PantryMatcher';
-import { KitchenToolsGuide } from './components/KitchenToolsGuide';
-import { ShoppingListModal } from './components/ShoppingListModal';
-import { AddRecipeModal } from './components/AddRecipeModal';
-import { CookbookView } from './components/CookbookView';
+import { CategoriesFilter } from './components/CategoriesFilter';
+import { HeroFeatured } from './components/HeroFeatured';
+import { ArticleCard } from './components/ArticleCard';
+import { ArticleDetail } from './components/ArticleDetail';
+import { ArticleEditorModal } from './components/ArticleEditorModal';
+import { BookmarksView } from './components/BookmarksView';
+import { Footer } from './components/Footer';
+import { AdminDashboard } from './components/AdminDashboard';
+import { AdminLoginModal } from './components/AdminLoginModal';
+import { Search, Compass, BookOpen, AlertCircle, Shield, Crown, Sparkles, X } from 'lucide-react';
+
+const DEFAULT_CATEGORIES: Category[] = [
+  'الكل',
+  'الذكاء الاصطناعي',
+  'البرمجة والتقنية',
+  'ريادة الأعمال',
+  'التصميم وتجربة المستخدم',
+  'الإنتاجية وتطوير الذات',
+  'العلوم والابتكار'
+];
+
+const DEFAULT_SITE_SETTINGS: SiteSettings = {
+  siteTitle: 'مَقَالَات',
+  siteSlogan: 'منصة الفكر والمعرفة',
+  siteDescription: 'مساحة فكرية عربية رصينة تهتم بنشر الأفكار الجوهرية في التقنية، الذكاء الاصطناعي، ريادة الأعمال، وتصميم المنتجات، بعيداً عن السطحية والإثارة المبتذلة.',
+  announcement: {
+    enabled: true,
+    text: 'لوحة تحكم المشرف (Admin CMS) مفعلة الآن! يمكنك إدارة المقالات والأقسام والإعدادات بالكامل من الواجهة.',
+    linkText: 'فتح لوحة التحكم'
+  },
+  footerText: '© جميع الحقوق محفوظة لمنصة مَقَالَات للتدوين والنشر الرقمي.',
+  enableComments: true,
+  enableAudioReader: true,
+  allowPublicSubmissions: true
+};
+
+const DEFAULT_SUBSCRIBERS: NewsletterSubscriber[] = [
+  { id: 'sub-1', email: 'ahmed.dev@example.com', subscribedAt: '2026-03-01' },
+  { id: 'sub-2', email: 'sara.tech@example.com', subscribedAt: '2026-03-05' },
+  { id: 'sub-3', email: 'omar.writer@example.com', subscribedAt: '2026-03-09' }
+];
 
 export default function App() {
-  // Persistence state
-  const [recipes, setRecipes] = useState<Recipe[]>(() => {
+  // Articles persistence
+  const [articles, setArticles] = useState<Article[]>(() => {
     try {
-      const stored = localStorage.getItem('cucina_custom_recipes');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return [...INITIAL_RECIPES, ...parsed];
+      const stored = localStorage.getItem('maqalat_all_articles');
+      if (stored) return JSON.parse(stored);
+      
+      const legacyCustom = localStorage.getItem('maqalat_custom_articles');
+      if (legacyCustom) {
+        return [...JSON.parse(legacyCustom), ...INITIAL_ARTICLES];
       }
-    } catch {
-      // fallback
-    }
-    return INITIAL_RECIPES;
+    } catch {}
+    return INITIAL_ARTICLES;
   });
 
-  const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>(() => {
+  // Categories persistence
+  const [categories, setCategories] = useState<Category[]>(() => {
     try {
-      const stored = localStorage.getItem('cucina_saved_recipes');
-      return stored ? JSON.parse(stored) : ['salmon-tuscan', 'pasta-carbonara'];
-    } catch {
-      return ['salmon-tuscan', 'pasta-carbonara'];
-    }
+      const stored = localStorage.getItem('maqalat_categories');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return DEFAULT_CATEGORIES;
   });
 
-  const [shoppingList, setShoppingList] = useState<ShoppingItem[]>(() => {
+  // Site settings persistence
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
     try {
-      const stored = localStorage.getItem('cucina_shopping_list');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+      const stored = localStorage.getItem('maqalat_site_settings');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return DEFAULT_SITE_SETTINGS;
   });
 
-  const [cookLogs, setCookLogs] = useState<CookLog[]>(() => {
+  // Subscribers persistence
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>(() => {
     try {
-      const stored = localStorage.getItem('cucina_cook_logs');
-      return stored
-        ? JSON.parse(stored)
-        : [
-            {
-              recipeId: 'pasta-carbonara',
-              date: new Date(Date.now() - 86400000 * 2).toISOString(),
-              rating: 5,
-              notes: 'Followed the off-heat mantecatura rule: zero curdling, super silky gloss!',
-            },
-          ];
-    } catch {
-      return [];
-    }
+      const stored = localStorage.getItem('maqalat_subscribers');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return DEFAULT_SUBSCRIBERS;
   });
 
-  const [useMetric, setUseMetric] = useState<boolean>(() => {
+  // Admin authentication state
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {
-      const stored = localStorage.getItem('cucina_use_metric');
-      return stored !== null ? JSON.parse(stored) : false;
+      return localStorage.getItem('maqalat_is_admin') === 'true';
     } catch {
       return false;
     }
   });
 
-  // UI state
-  const [activeTab, setActiveTab] = useState<'recipes' | 'pantry' | 'tools' | 'cookbook'>('recipes');
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [cookModeRecipe, setCookModeRecipe] = useState<Recipe | null>(null);
-  const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
-  const [isAddRecipeOpen, setIsAddRecipeOpen] = useState(false);
+  // Modals & Active State
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  // Search & Filtering
+  // Bookmarks persistence
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('maqalat_bookmarks');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return ['art-1', 'art-3'];
+  });
+
+  // Active View & Navigation: 'home' | 'bookmarks' | 'admin'
+  const [currentView, setCurrentView] = useState<'home' | 'bookmarks' | 'admin'>('home');
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+
+  // Filters & Sorting
+  const [selectedCategory, setSelectedCategory] = useState<Category>('الكل');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<MealCategory>('all');
-  const [selectedDietaryTag, setSelectedDietaryTag] = useState<string>('all');
-  const [maxTotalTime, setMaxTotalTime] = useState<number>(120);
-  const [sortBy, setSortBy] = useState<'rating' | 'time' | 'calories'>('rating');
+  const [sortBy, setSortBy] = useState<'latest' | 'popular' | 'likes'>('latest');
 
-  // Sync to localStorage
-  useEffect(() => {
+  // Dark Mode
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
-      const customOnly = recipes.filter((r) => r.isCustom);
-      localStorage.setItem('cucina_custom_recipes', JSON.stringify(customOnly));
-    } catch {}
-  }, [recipes]);
+      const saved = localStorage.getItem('maqalat_dark_mode');
+      if (saved !== null) return JSON.parse(saved);
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return false;
+    }
+  });
 
+  // Apply dark mode class to html element
   useEffect(() => {
-    try {
-      localStorage.setItem('cucina_saved_recipes', JSON.stringify(savedRecipeIds));
-    } catch {}
-  }, [savedRecipeIds]);
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('maqalat_dark_mode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
 
+  // Sync site title with document title
   useEffect(() => {
-    try {
-      localStorage.setItem('cucina_shopping_list', JSON.stringify(shoppingList));
-    } catch {}
-  }, [shoppingList]);
+    if (siteSettings?.siteTitle) {
+      document.title = `${siteSettings.siteTitle} — ${siteSettings.siteSlogan || 'منصة الفكر والمعرفة'}`;
+    }
+  }, [siteSettings]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('cucina_cook_logs', JSON.stringify(cookLogs));
-    } catch {}
-  }, [cookLogs]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('cucina_use_metric', JSON.stringify(useMetric));
-    } catch {}
-  }, [useMetric]);
-
-  // Handlers
-  const handleToggleSave = (id: string) => {
-    setSavedRecipeIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+  // Save articles helper
+  const handleUpdateArticles = (updatedList: Article[]) => {
+    setArticles(updatedList);
+    localStorage.setItem('maqalat_all_articles', JSON.stringify(updatedList));
   };
 
-  const handleAddIngredientsToShoppingList = (
-    newItems: Array<{ name: string; amount: string; category: string }>,
-    recipeTitle: string
-  ) => {
-    const itemsToAdd: ShoppingItem[] = newItems.map((item, idx) => ({
-      id: `shop-${Date.now()}-${idx}`,
-      recipeTitle,
-      name: item.name,
-      amount: item.amount,
-      category: (item.category as IngredientCategory) || 'Produce',
-      checked: false,
-    }));
-    setShoppingList((prev) => [...prev, ...itemsToAdd]);
+  // Save categories helper
+  const handleUpdateCategories = (newCategories: Category[]) => {
+    setCategories(newCategories);
+    localStorage.setItem('maqalat_categories', JSON.stringify(newCategories));
   };
 
-  const handleToggleShoppingItem = (id: string) => {
-    setShoppingList((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
-    );
+  // Save site settings helper
+  const handleUpdateSiteSettings = (newSettings: SiteSettings) => {
+    setSiteSettings(newSettings);
+    localStorage.setItem('maqalat_site_settings', JSON.stringify(newSettings));
   };
 
-  const handleDeleteShoppingItem = (id: string) => {
-    setShoppingList((prev) => prev.filter((item) => item.id !== id));
+  // Save subscribers helper
+  const handleUpdateSubscribers = (newSubscribers: NewsletterSubscriber[]) => {
+    setSubscribers(newSubscribers);
+    localStorage.setItem('maqalat_subscribers', JSON.stringify(newSubscribers));
   };
 
-  const handleClearCheckedShopping = () => {
-    setShoppingList((prev) => prev.filter((item) => !item.checked));
+  // Reset to defaults
+  const handleResetToDefaults = () => {
+    handleUpdateArticles(INITIAL_ARTICLES);
+    handleUpdateCategories(DEFAULT_CATEGORIES);
+    handleUpdateSiteSettings(DEFAULT_SITE_SETTINGS);
+    handleUpdateSubscribers(DEFAULT_SUBSCRIBERS);
   };
 
-  const handleClearAllShopping = () => {
-    setShoppingList([]);
+  // Toggle Bookmark
+  const handleToggleBookmark = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setBookmarkedIds((prev) => {
+      const exists = prev.includes(id);
+      const next = exists ? prev.filter(i => i !== id) : [...prev, id];
+      localStorage.setItem('maqalat_bookmarks', JSON.stringify(next));
+      return next;
+    });
   };
 
-  const handleAddCustomShoppingItem = (name: string, amount: string, category: IngredientCategory) => {
-    const newItem: ShoppingItem = {
-      id: `shop-custom-${Date.now()}`,
-      name,
-      amount,
-      category,
-      checked: false,
+  // Like Article
+  const handleLikeArticle = (id: string) => {
+    const updated = articles.map((art) => {
+      if (art.id === id) {
+        return { ...art, likes: art.likes + 1 };
+      }
+      return art;
+    });
+    handleUpdateArticles(updated);
+  };
+
+  // Add Comment
+  const handleAddComment = (articleId: string, comment: Comment) => {
+    const updated = articles.map((art) => {
+      if (art.id === articleId) {
+        return { ...art, comments: [comment, ...art.comments] };
+      }
+      return art;
+    });
+    handleUpdateArticles(updated);
+
+    if (selectedArticle && selectedArticle.id === articleId) {
+      setSelectedArticle(prev => prev ? { ...prev, comments: [comment, ...prev.comments] } : null);
+    }
+  };
+
+  // Publish / Update Article (from editor modal)
+  const handlePublishArticle = (articleToSave: Article) => {
+    const existingIndex = articles.findIndex(a => a.id === articleToSave.id);
+    let updated: Article[];
+
+    if (existingIndex >= 0) {
+      // Update existing
+      updated = articles.map(a => a.id === articleToSave.id ? articleToSave : a);
+    } else {
+      // Add new
+      updated = [articleToSave, ...articles];
+    }
+
+    handleUpdateArticles(updated);
+    setEditingArticle(null);
+
+    // If currently reading this article, update it
+    if (selectedArticle && selectedArticle.id === articleToSave.id) {
+      setSelectedArticle(articleToSave);
+    } else if (!selectedArticle && currentView !== 'admin') {
+      setSelectedArticle(articleToSave);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Quick Edit an article (from card or reader)
+  const handleEditArticle = (article: Article, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingArticle(article);
+    setIsEditorOpen(true);
+  };
+
+  // Quick Delete an article
+  const handleDeleteArticle = (article: Article, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const confirmed = window.confirm(`هل أنت متأكد من حذف مقال "${article.title}" نهائياً من الموقع؟`);
+    if (!confirmed) return;
+
+    const updated = articles.filter(a => a.id !== article.id);
+    handleUpdateArticles(updated);
+
+    if (selectedArticle && selectedArticle.id === article.id) {
+      setSelectedArticle(null);
+    }
+  };
+
+  // Select Article for Reading
+  const handleSelectArticle = (article: Article) => {
+    // Increment view count
+    const updated = articles.map((a) => {
+      if (a.id === article.id) {
+        return { ...a, views: a.views + 1 };
+      }
+      return a;
+    });
+    handleUpdateArticles(updated);
+
+    setSelectedArticle({ ...article, views: article.views + 1 });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Add Newsletter Subscriber
+  const handleSubscribe = (email: string) => {
+    if (!email) return;
+    const exists = subscribers.some(s => s.email.toLowerCase() === email.toLowerCase());
+    if (exists) return;
+
+    const newSub: NewsletterSubscriber = {
+      id: 'sub-' + Date.now(),
+      email: email.trim().toLowerCase(),
+      subscribedAt: new Date().toISOString().split('T')[0]
     };
-    setShoppingList((prev) => [...prev, newItem]);
+    handleUpdateSubscribers([newSub, ...subscribers]);
   };
 
-  const handleAddCustomRecipe = (recipe: Recipe) => {
-    setRecipes((prev) => [recipe, ...prev]);
-    setSelectedRecipe(recipe);
+  // Admin Login success handler
+  const handleLoginSuccess = () => {
+    setIsAdmin(true);
+    localStorage.setItem('maqalat_is_admin', 'true');
+    setCurrentView('admin');
+    setSelectedArticle(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCompleteCook = (log: CookLog) => {
-    setCookLogs((prev) => [log, ...prev]);
+  // Admin Exit handler
+  const handleExitAdmin = () => {
+    setIsAdmin(false);
+    localStorage.removeItem('maqalat_is_admin');
+    setCurrentView('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Filtered recipes
-  const filteredRecipes = useMemo(() => {
-    return recipes
-      .filter((r) => {
-        // Search query
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchTitle = r.title.toLowerCase().includes(q);
-          const matchSub = r.subtitle.toLowerCase().includes(q);
-          const matchTag = r.tags.some((t) => t.toLowerCase().includes(q));
-          const matchIng = r.ingredients.some((i) => i.name.toLowerCase().includes(q));
-          if (!matchTitle && !matchSub && !matchTag && !matchIng) return false;
-        }
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      'الكل': articles.length
+    };
 
-        // Category filter
-        if (selectedCategory !== 'all' && r.category !== selectedCategory) {
-          return false;
-        }
+    categories.forEach(cat => {
+      if (cat !== 'الكل') counts[cat] = 0;
+    });
 
-        // Dietary Tag filter
-        if (selectedDietaryTag !== 'all' && !r.tags.includes(selectedDietaryTag as DietaryTag)) {
-          return false;
-        }
+    articles.forEach((a) => {
+      if (counts[a.category] !== undefined) {
+        counts[a.category] += 1;
+      }
+    });
 
-        // Max cook time
-        if (r.totalTime > maxTotalTime) {
-          return false;
-        }
+    return counts;
+  }, [articles, categories]);
 
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'rating') return b.rating - a.rating;
-        if (sortBy === 'time') return a.totalTime - b.totalTime;
-        if (sortBy === 'calories') return a.caloriesPerServing - b.caloriesPerServing;
-        return 0;
-      });
-  }, [recipes, searchQuery, selectedCategory, selectedDietaryTag, maxTotalTime, sortBy]);
+  // Filtered & Sorted Articles
+  const filteredArticles = useMemo(() => {
+    let list = [...articles];
 
-  // Featured Recipe of the Day
-  const featuredRecipe = recipes[0];
+    // Filter by category
+    if (selectedCategory !== 'الكل') {
+      list = list.filter(a => a.category === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(a => 
+        a.title.toLowerCase().includes(q) ||
+        a.excerpt.toLowerCase().includes(q) ||
+        a.author.name.toLowerCase().includes(q) ||
+        a.tags.some(t => t.toLowerCase().includes(q))
+      );
+    }
+
+    // Sorting
+    list.sort((a, b) => {
+      if (sortBy === 'popular') return b.views - a.views;
+      if (sortBy === 'likes') return b.likes - a.likes;
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
+
+    return list;
+  }, [articles, selectedCategory, searchQuery, sortBy]);
+
+  // Featured Article (first featured or top liked)
+  const featuredArticle = useMemo(() => {
+    return articles.find(a => a.featured) || articles[0];
+  }, [articles]);
+
+  // Bookmarked Articles
+  const bookmarkedArticles = useMemo(() => {
+    return articles.filter(a => bookmarkedIds.includes(a.id));
+  }, [articles, bookmarkedIds]);
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-stone-900 flex flex-col font-sans">
-      {/* Navigation Header */}
+    <div className="min-h-screen flex flex-col bg-[#fafaf9] dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors duration-200">
+      
+      {/* Top Main Navigation */}
       <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        savedCount={savedRecipeIds.length}
-        shoppingListCount={shoppingList.filter((i) => !i.checked).length}
-        openShoppingList={() => setIsShoppingListOpen(true)}
-        openAddRecipe={() => setIsAddRecipeOpen(true)}
-        useMetric={useMetric}
-        setUseMetric={setUseMetric}
+        currentView={currentView}
+        setCurrentView={(view) => {
+          setSelectedArticle(null);
+          setCurrentView(view);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        bookmarksCount={bookmarkedIds.length}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        onOpenNewArticle={() => {
+          setEditingArticle(null);
+          setIsEditorOpen(true);
+        }}
+        isAdmin={isAdmin}
+        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+        onExitAdmin={handleExitAdmin}
+        siteSettings={siteSettings}
       />
 
-      {/* Main View Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* TAB 1: RECIPES CATALOG */}
-        {activeTab === 'recipes' && (
-          <div className="space-y-10 animate-in fade-in duration-300">
-            {/* Editorial Hero Banner */}
-            <div className="relative rounded-3xl overflow-hidden bg-stone-900 text-white shadow-xl">
-              {/* Background ambient lighting */}
-              <div 
-                className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-luminosity scale-105 transition-transform duration-1000"
-                style={{ backgroundImage: `url(${featuredRecipe?.imageUrl})` }}
+      {/* Floating Admin Status Bar when Logged In as Admin */}
+      {isAdmin && currentView !== 'admin' && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 py-2 px-4 text-xs">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold">
+              <Crown className="w-4 h-4 text-amber-500" />
+              <span>وضع المسؤول نشط: يمكنك تعديل وحذف المقالات مباشرة من البطاقات أو الدخول للوحة التحكم الشاملة.</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setSelectedArticle(null);
+                  setCurrentView('admin');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-3 py-1 bg-amber-500 text-stone-950 rounded-lg font-bold hover:bg-amber-400 transition-colors"
+              >
+                فتح لوحة التحكم
+              </button>
+              <button
+                onClick={handleExitAdmin}
+                className="text-stone-500 dark:text-stone-400 hover:text-rose-500 transition-colors"
+              >
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Container */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* If user is inside Admin Dashboard */}
+        {currentView === 'admin' ? (
+          <div className="py-6">
+            <AdminDashboard
+              articles={articles}
+              categories={categories}
+              siteSettings={siteSettings}
+              subscribers={subscribers}
+              onUpdateArticles={handleUpdateArticles}
+              onUpdateCategories={handleUpdateCategories}
+              onUpdateSiteSettings={handleUpdateSiteSettings}
+              onUpdateSubscribers={handleUpdateSubscribers}
+              onOpenArticleEditor={(article) => {
+                setEditingArticle(article || null);
+                setIsEditorOpen(true);
+              }}
+              onViewArticle={(article) => {
+                setSelectedArticle(article);
+                setCurrentView('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onExitAdmin={handleExitAdmin}
+              onResetToDefaults={handleResetToDefaults}
+            />
+          </div>
+        ) : selectedArticle ? (
+          /* If user is reading an article */
+          <ArticleDetail
+            article={selectedArticle}
+            onBack={() => {
+              setSelectedArticle(null);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            isBookmarked={bookmarkedIds.includes(selectedArticle.id)}
+            onToggleBookmark={handleToggleBookmark}
+            onLikeArticle={handleLikeArticle}
+            onAddComment={handleAddComment}
+            onSelectRelatedArticle={handleSelectArticle}
+            relatedArticles={articles.filter(a => a.category === selectedArticle.category && a.id !== selectedArticle.id)}
+            isAdmin={isAdmin}
+            onEditArticle={(art) => handleEditArticle(art)}
+            onDeleteArticle={(art) => handleDeleteArticle(art)}
+          />
+        ) : currentView === 'bookmarks' ? (
+          /* Bookmarks / Reading List View */
+          <BookmarksView
+            bookmarkedArticles={bookmarkedArticles}
+            onSelectArticle={handleSelectArticle}
+            onToggleBookmark={handleToggleBookmark}
+            onExploreClick={() => {
+              setCurrentView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : (
+          /* Home Discovery View */
+          <main>
+            {/* Show Featured Article only if no specific search query or category filter */}
+            {selectedCategory === 'الكل' && !searchQuery.trim() && featuredArticle && (
+              <HeroFeatured
+                article={featuredArticle}
+                onSelectArticle={handleSelectArticle}
+                isBookmarked={bookmarkedIds.includes(featuredArticle.id)}
+                onToggleBookmark={handleToggleBookmark}
+                isAdmin={isAdmin}
+                onEditArticle={(art, e) => handleEditArticle(art, e)}
+                onDeleteArticle={(art, e) => handleDeleteArticle(art, e)}
               />
-              <div className="absolute inset-0 bg-linear-to-r from-stone-950 via-stone-950/80 to-transparent" />
+            )}
 
-              <div className="relative p-6 sm:p-12 lg:p-14 max-w-3xl space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold backdrop-blur-xs">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Editor's Featured Centerpiece</span>
+            {/* Categories & Sorting Filters */}
+            <CategoriesFilter
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              categoryCounts={categoryCounts}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
+
+            {/* Search Results Summary (if searching) */}
+            {searchQuery.trim() && (
+              <div className="my-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
+                  <Search className="w-4 h-4 text-amber-500" />
+                  <span>نتائج البحث عن: <strong>"{searchQuery}"</strong></span>
+                  <span className="text-stone-400">({filteredArticles.length} مقال)</span>
                 </div>
-
-                <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-                  {featuredRecipe?.title}
-                </h1>
-
-                <p className="text-stone-300 text-sm sm:text-base leading-relaxed line-clamp-2">
-                  {featuredRecipe?.subtitle}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-4 text-xs text-stone-300 pt-2">
-                  <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full backdrop-blur-xs">
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
-                    {featuredRecipe?.totalTime} mins total
-                  </span>
-                  <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full backdrop-blur-xs">
-                    <Flame className="w-3.5 h-3.5 text-orange-400" />
-                    {featuredRecipe?.caloriesPerServing} kcal
-                  </span>
-                  <span className="capitalize bg-amber-600/40 text-amber-200 px-3 py-1 rounded-full border border-amber-500/30 font-semibold">
-                    {featuredRecipe?.difficulty}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-3 pt-3">
-                  <button
-                    id="hero-cook-mode-btn"
-                    onClick={() => setCookModeRecipe(featuredRecipe)}
-                    className="px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-sm shadow-md flex items-center gap-2 transition-all hover:shadow-lg"
-                  >
-                    <ChefHat className="w-4 h-4" />
-                    <span>Start Cooking Now</span>
-                  </button>
-                  <button
-                    id="hero-recipe-detail-btn"
-                    onClick={() => setSelectedRecipe(featuredRecipe)}
-                    className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm backdrop-blur-md transition-colors"
-                  >
-                    View Ingredients &amp; Guide
-                  </button>
-                </div>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold"
+                >
+                  مسح البحث
+                </button>
               </div>
-            </div>
+            )}
 
-            {/* Filter & Search Bar */}
-            <div className="bg-white rounded-2xl border border-stone-200/90 p-4 sm:p-5 shadow-xs space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                {/* Search Input */}
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
-                  <input
-                    type="text"
-                    id="recipe-search-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by dish, ingredient (e.g. salmon, garlic, pasta), or dietary style..."
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700 focus:bg-white text-stone-900 transition-all"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-3 text-stone-400 hover:text-stone-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Sort dropdown */}
-                <div className="flex items-center gap-2 text-xs font-semibold text-stone-600 shrink-0">
-                  <SlidersHorizontal className="w-4 h-4 text-stone-400" />
-                  <span>Sort by:</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 text-xs font-medium focus:outline-none"
-                  >
-                    <option value="rating">Highest Rated ★</option>
-                    <option value="time">Fastest Cooking Time</option>
-                    <option value="calories">Lowest Calories</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Category Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                {(
-                  [
-                    { id: 'all', label: 'All Recipes' },
-                    { id: 'quick', label: 'Quick (<30m)' },
-                    { id: 'mains', label: 'Mains & Meats' },
-                    { id: 'pasta', label: 'Pasta & Italian' },
-                    { id: 'healthy', label: 'Healthy Bowls' },
-                    { id: 'breakfast', label: 'Breakfast' },
-                    { id: 'soups', label: 'Soups & Bisques' },
-                    { id: 'desserts', label: 'Baking & Sweets' },
-                  ] as Array<{ id: MealCategory; label: string }>
-                ).map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3.5 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all ${
-                      selectedCategory === cat.id
-                        ? 'bg-amber-700 text-white font-semibold shadow-2xs'
-                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Dietary Tags Secondary Filter Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 text-xs">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-stone-400 font-semibold uppercase text-[10px] tracking-wider mr-1">
-                    Diet:
-                  </span>
-                  {['all', 'Vegetarian', 'Gluten-Free', 'High-Protein', 'One-Pot', 'Vegan'].map(
-                    (tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => setSelectedDietaryTag(tag)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
-                          selectedDietaryTag === tag
-                            ? 'bg-stone-900 text-white font-semibold'
-                            : 'bg-stone-50 border border-stone-200 text-stone-600 hover:bg-stone-100'
-                        }`}
-                      >
-                        {tag === 'all' ? 'Any Diet' : tag}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                {/* Reset Filters */}
-                {(searchQuery || selectedCategory !== 'all' || selectedDietaryTag !== 'all') && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('all');
-                      setSelectedDietaryTag('all');
-                    }}
-                    className="text-amber-800 hover:text-amber-950 font-semibold flex items-center gap-1 text-[11px]"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Reset filters</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Recipes Grid */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-serif text-2xl font-bold text-stone-900 tracking-tight">
-                  {selectedCategory === 'all' ? 'All Culinary Creations' : `Curated ${selectedCategory}`}
-                  <span className="ml-2 text-sm text-stone-400 font-sans font-normal">
-                    ({filteredRecipes.length} dishes found)
-                  </span>
-                </h2>
-              </div>
-
-              {filteredRecipes.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl border border-stone-200/80 p-8 space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center mx-auto">
-                    <Search className="w-8 h-8" />
+            {/* Articles Grid or Empty Search */}
+            <div className="py-8">
+              {filteredArticles.length === 0 ? (
+                <div className="py-20 text-center max-w-md mx-auto">
+                  <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-400 flex items-center justify-center mx-auto mb-3">
+                    <AlertCircle className="w-7 h-7" />
                   </div>
-                  <h3 className="font-serif text-xl font-bold text-stone-900">
-                    No recipes match your search
+                  <h3 className="text-base font-bold text-stone-900 dark:text-stone-100 mb-1">
+                    لم نعثر على مقالات مطابقة
                   </h3>
-                  <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto">
-                    Try adjusting your search terms, removing dietary filters, or browse our full collection.
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
+                    جرّب البحث بكلمات مختلفة أو تصفح أحد الأقسام الأخرى.
                   </p>
                   <button
                     onClick={() => {
+                      setSelectedCategory('الكل');
                       setSearchQuery('');
-                      setSelectedCategory('all');
-                      setSelectedDietaryTag('all');
                     }}
-                    className="px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-semibold hover:bg-stone-800"
+                    className="px-4 py-2 rounded-xl bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950 text-xs font-semibold"
                   >
-                    Clear All Filters
+                    عرض جميع المقالات
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {filteredRecipes.map((recipe) => (
-                    <RecipeCard
-                      key={recipe.id}
-                      recipe={recipe}
-                      isSaved={savedRecipeIds.includes(recipe.id)}
-                      onToggleSave={handleToggleSave}
-                      onSelectRecipe={setSelectedRecipe}
-                      onStartCookMode={setCookModeRecipe}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredArticles.map((article) => (
+                    <ArticleCard
+                      key={article.id}
+                      article={article}
+                      onSelectArticle={handleSelectArticle}
+                      isBookmarked={bookmarkedIds.includes(article.id)}
+                      onToggleBookmark={handleToggleBookmark}
+                      isAdmin={isAdmin}
+                      onEditArticle={(art, e) => handleEditArticle(art, e)}
+                      onDeleteArticle={(art, e) => handleDeleteArticle(art, e)}
                     />
                   ))}
                 </div>
               )}
             </div>
-          </div>
+
+          </main>
         )}
 
-        {/* TAB 2: PANTRY MATCHER */}
-        {activeTab === 'pantry' && (
-          <PantryMatcher
-            recipes={recipes}
-            onSelectRecipe={setSelectedRecipe}
-            onStartCookMode={setCookModeRecipe}
-            onAddIngredientsToShoppingList={handleAddIngredientsToShoppingList}
-          />
-        )}
+      </div>
 
-        {/* TAB 3: KITCHEN TOOLS & GUIDE */}
-        {activeTab === 'tools' && <KitchenToolsGuide />}
-
-        {/* TAB 4: MY COOKBOOK */}
-        {activeTab === 'cookbook' && (
-          <CookbookView
-            recipes={recipes}
-            savedRecipeIds={savedRecipeIds}
-            cookLogs={cookLogs}
-            onToggleSave={handleToggleSave}
-            onSelectRecipe={setSelectedRecipe}
-            onStartCookMode={setCookModeRecipe}
-            openAddRecipe={() => setIsAddRecipeOpen(true)}
-            onExploreRecipes={() => setActiveTab('recipes')}
-          />
-        )}
-      </main>
-
-      {/* FOOTER */}
-      <footer className="mt-20 border-t border-stone-200/80 bg-white/70 py-12 text-stone-600 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-700 text-amber-50 flex items-center justify-center">
-              <ChefHat className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-serif font-bold text-stone-900 text-sm">Cucina Studio</span>
-              <p className="text-[11px] text-stone-400">Crafted for home cooks &amp; culinary enthusiasts</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-6 text-stone-500 font-medium">
-            <button onClick={() => setActiveTab('recipes')} className="hover:text-stone-900">
-              Recipe Catalog
-            </button>
-            <button onClick={() => setActiveTab('pantry')} className="hover:text-stone-900">
-              Pantry Matcher
-            </button>
-            <button onClick={() => setActiveTab('tools')} className="hover:text-stone-900">
-              Kitchen Guide &amp; SOS
-            </button>
-            <button onClick={() => setIsShoppingListOpen(true)} className="hover:text-stone-900">
-              Grocery List ({shoppingList.length})
-            </button>
-          </div>
-
-          <p className="text-stone-400 text-[11px]">
-            © {new Date().getFullYear()} Cucina Culinary Companion. Bon Appétit.
-          </p>
-        </div>
-      </footer>
-
-      {/* MODALS */}
-      {/* 1. Recipe Detail Modal */}
-      <RecipeDetailModal
-        recipe={selectedRecipe}
-        onClose={() => setSelectedRecipe(null)}
-        isSaved={selectedRecipe ? savedRecipeIds.includes(selectedRecipe.id) : false}
-        onToggleSave={handleToggleSave}
-        onStartCookMode={(recipe) => {
-          setSelectedRecipe(null);
-          setCookModeRecipe(recipe);
+      {/* Editor Modal for Writing or Editing Articles */}
+      <ArticleEditorModal
+        isOpen={isEditorOpen}
+        onClose={() => {
+          setIsEditorOpen(false);
+          setEditingArticle(null);
         }}
-        onAddIngredientsToShoppingList={handleAddIngredientsToShoppingList}
-        useMetric={useMetric}
-        setUseMetric={setUseMetric}
+        onPublish={handlePublishArticle}
+        categories={categories}
+        initialArticle={editingArticle}
       />
 
-      {/* 2. Interactive Kitchen Cook Mode */}
-      <CookModeModal
-        recipe={cookModeRecipe}
-        onClose={() => setCookModeRecipe(null)}
-        onCompleteCook={handleCompleteCook}
-        useMetric={useMetric}
+      {/* Admin Login Modal */}
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* 3. Grocery Shopping List Drawer/Modal */}
-      <ShoppingListModal
-        isOpen={isShoppingListOpen}
-        onClose={() => setIsShoppingListOpen(false)}
-        items={shoppingList}
-        onToggleItem={handleToggleShoppingItem}
-        onDeleteItem={handleDeleteShoppingItem}
-        onClearChecked={handleClearCheckedShopping}
-        onClearAll={handleClearAllShopping}
-        onAddItem={handleAddCustomShoppingItem}
+      {/* Footer */}
+      <Footer
+        categories={categories}
+        onSelectCategory={(cat) => {
+          setSelectedArticle(null);
+          setCurrentView('home');
+          setSelectedCategory(cat);
+        }}
+        isAdmin={isAdmin}
+        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+        onOpenAdminDashboard={() => {
+          setSelectedArticle(null);
+          setCurrentView('admin');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onSubscribe={handleSubscribe}
+        siteSettings={siteSettings}
       />
 
-      {/* 4. Add Custom Recipe Modal */}
-      <AddRecipeModal
-        isOpen={isAddRecipeOpen}
-        onClose={() => setIsAddRecipeOpen(false)}
-        onAddRecipe={handleAddCustomRecipe}
-      />
     </div>
   );
 }
