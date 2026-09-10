@@ -1,6 +1,6 @@
 {
   "name": "GTA Vice City Web — بوابة ألعاب فايس سيتي",
-  "description": "منصة ألعاب متكاملة مخصصة للعبة GTA Vice City على المتصفح مع محاكي تشغيل حزمة gtavc-full-github.zip، شفرات الغش، مشغل محطات الراديو، وألعاب ريترو كلاسيكية.",
+  "description": "موقع ألعاب متكامل مع صالة ألعاب ريترو وعالم مفتوح، ولوحة تحكم مخصصة لرفع وسحب ملفات وأرشيفات اللعبة وتثبيتها في المتصفح.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -102,4 +102,20 @@ export interface ZipFileInfo {
   errorMessage?: string;
 }
 
-export type ActiveTab = 'gta-game' | 'zip-loader' | 'cheats' | 'radio' | 'map' | 'arcade-games' | 'about';
+export interface UploadedGameAsset {
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  category: 'models' | 'audio' | 'data' | 'executable' | 'scripts' | 'other';
+}
+
+export type ActiveTab = 
+  | 'games-portal' 
+  | 'gta-game' 
+  | 'admin-panel' 
+  | 'zip-loader' 
+  | 'arcade-games' 
+  | 'cheats' 
+  | 'radio' 
+  | 'map';
