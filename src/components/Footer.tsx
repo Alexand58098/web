@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Send, CheckCircle2, Heart, Shield, Crown } from 'lucide-react';
+import { Feather, Send, CheckCircle2, Heart, Shield, Crown } from 'lucide-react';
 import { Category, SiteSettings } from '../types';
 
 interface FooterProps {
@@ -42,20 +42,28 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 1: Brand & Philosophy */}
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                <BookOpen className="w-5 h-5" />
+              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 flex items-center justify-center text-stone-950 shadow-sm">
+                <Feather className="w-5 h-5 text-stone-950" />
+                <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-stone-900 dark:bg-stone-100 flex items-center justify-center text-[8px] font-bold text-white dark:text-stone-900">
+                  ★
+                </span>
               </div>
-              <span className="text-xl font-bold tracking-tight font-arabic text-stone-950 dark:text-stone-50">
-                {siteSettings?.siteTitle || 'مَقَالَات'}
-              </span>
+              <div>
+                <span className="text-xl font-bold tracking-tight font-arabic text-stone-950 dark:text-stone-50 block leading-none">
+                  {siteSettings?.siteTitle || 'مدونة المجتهد'}
+                </span>
+                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold block mt-1 font-arabic">
+                  {siteSettings?.siteSlogan || 'منصة الفكر والمعرفة الرصينة'}
+                </span>
+              </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 leading-relaxed max-w-sm">
-              {siteSettings?.siteDescription || 'مساحة فكرية عربية رصينة تهتم بنشر الأفكار الجوهرية في التقنية، الذكاء الاصطناعي، ريادة الأعمال، وتصميم المنتجات، بعيداً عن السطحية والإثارة المبتذلة.'}
+            <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 leading-relaxed max-w-sm font-arabic">
+              {siteSettings?.siteDescription || 'المساحة الرقمية الرائدة للمجتهدين وصنّاع الأثر في العالم العربي؛ تحليلات برمجية معمقة، رؤى في الذكاء الاصطناعي، وأدلة ريادة الأعمال بعيداً عن السطحية والإثارة المبتذلة.'}
             </p>
 
-            <div className="pt-2 text-xs text-stone-400 flex items-center gap-1">
-              <span>صُنعت بشغف للقراءة العميقة</span>
+            <div className="pt-2 text-xs text-stone-400 flex items-center gap-1.5 font-medium">
+              <span>صُممت بعناية فائقة للمجتهدين وطالبي المعرفة</span>
               <Heart className="w-3.5 h-3.5 text-rose-500 fill-current inline" />
             </div>
           </div>
@@ -63,7 +71,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 2: Categories Nav */}
           <div className="md:col-span-3 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900 dark:text-stone-100 font-arabic">
-              أقسام المقالات
+              أقسام مدونة المجتهد
             </h4>
             <ul className="space-y-2 text-xs">
               {categories.filter(c => c !== 'الكل').map((cat) => (
@@ -73,7 +81,7 @@ export const Footer: React.FC<FooterProps> = ({
                       onSelectCategory(cat);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="hover:text-amber-500 transition-colors text-stone-600 dark:text-stone-400"
+                    className="hover:text-amber-500 transition-colors text-stone-600 dark:text-stone-400 font-medium"
                   >
                     {cat}
                   </button>
@@ -85,23 +93,23 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 3: Newsletter Box */}
           <div className="md:col-span-4 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900 dark:text-stone-100 font-arabic">
-              النشرة البريدية الأسبوعية
+              نشرة المجتهد الأسبوعية
             </h4>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              ملخص لأفضل 3 مقالات منتقاة بعناية تصلك صباح كل سبت مباشرة إلى بريدك.
+            <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+              انضم لأكثر من 5,000 مجتهد يتلقون ملخصات أسبوعية لأهم ما يُنشر في التقنية والذكاء الاصطناعي وريادة الأعمال.
             </p>
 
             {subscribed ? (
               <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>تم اشتراكك بنجاح! نرحب بك معنا في مجتمع المقالات.</span>
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>تم اشتراكك بنجاح! نرحب بك في مجتمع مدونة المجتهد.</span>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="flex gap-2">
                 <input
                   type="email"
                   required
-                  placeholder="بريدك الإلكتروني..."
+                  placeholder="أدخل بريدك المهني..."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="flex-1 px-3.5 py-2 rounded-xl text-xs bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500/40 text-stone-900 dark:text-stone-100"
@@ -121,10 +129,10 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom divider & copyright */}
         <div className="mt-12 pt-6 border-t border-stone-200/60 dark:border-stone-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-3">
-          <span>© {new Date().getFullYear()} منصة {siteSettings?.siteTitle || 'مَقَالَات'}. جميع الحقوق محفوظة.</span>
+          <span>{siteSettings?.footerText || '© جميع الحقوق محفوظة لمدونة المجتهد — منصة الفكر والمعرفة الرصينة.'}</span>
           <div className="flex items-center gap-4">
-            <span className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">ميثاق التدوين</span>
-            <span className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">سياسة الخصوصية</span>
+            <span className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors cursor-pointer">ميثاق المجتهد</span>
+            <span className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors cursor-pointer">سياسة النشر والخصوصية</span>
             
             {/* Admin Quick Portal Access */}
             {isAdmin ? (
@@ -133,7 +141,7 @@ export const Footer: React.FC<FooterProps> = ({
                 className="text-amber-600 dark:text-amber-400 font-bold hover:underline flex items-center gap-1"
               >
                 <Crown className="w-3.5 h-3.5" />
-                <span>لوحة تحكم المسؤول (نشطة)</span>
+                <span>لوحة تحكم المشرف (نشطة)</span>
               </button>
             ) : (
               <button

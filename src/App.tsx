@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Article, Category, Comment, SiteSettings, NewsletterSubscriber } from './types';
 import { INITIAL_ARTICLES } from './data/articles';
 import { Navbar } from './components/Navbar';
@@ -11,7 +11,9 @@ import { BookmarksView } from './components/BookmarksView';
 import { Footer } from './components/Footer';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminLoginModal } from './components/AdminLoginModal';
-import { Search, Compass, BookOpen, AlertCircle, Shield, Crown, Sparkles, X } from 'lucide-react';
+import { CommandPalette } from './components/CommandPalette';
+import { EditorialTicker } from './components/EditorialTicker';
+import { Search, Compass, BookOpen, AlertCircle, Shield, Crown, Sparkles, X, LayoutGrid, List } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: Category[] = [
   'الكل',
@@ -24,15 +26,15 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  siteTitle: 'مَقَالَات',
-  siteSlogan: 'منصة الفكر والمعرفة',
-  siteDescription: 'مساحة فكرية عربية رصينة تهتم بنشر الأفكار الجوهرية في التقنية، الذكاء الاصطناعي، ريادة الأعمال، وتصميم المنتجات، بعيداً عن السطحية والإثارة المبتذلة.',
+  siteTitle: 'مدونة المجتهد',
+  siteSlogan: 'منصة الفكر والمعرفة الرصينة',
+  siteDescription: 'المساحة الرقمية الرائدة للمجتهدين وصنّاع الأثر في العالم العربي؛ تحليلات برمجية معمقة، رؤى في الذكاء الاصطناعي، وأدلة ريادة الأعمال بعيداً عن السطحية والإثارة المبتذلة.',
   announcement: {
     enabled: true,
-    text: 'لوحة تحكم المشرف (Admin CMS) مفعلة الآن! يمكنك إدارة المقالات والأقسام والإعدادات بالكامل من الواجهة.',
-    linkText: 'فتح لوحة التحكم'
+    text: 'مرحباً بك في مدونة المجتهد — منصة الفكر والمعرفة الرصينة للمبرمجين والمبتكرين وصناع المستقبل.',
+    linkText: 'تصفح مختارات المجتهد'
   },
-  footerText: '© جميع الحقوق محفوظة لمنصة مَقَالَات للتدوين والنشر الرقمي.',
+  footerText: '© جميع الحقوق محفوظة لمدونة المجتهد — منصة الفكر والمعرفة الرصينة.',
   enableComments: true,
   enableAudioReader: true,
   allowPublicSubmissions: true
@@ -68,11 +70,19 @@ export default function App() {
     return DEFAULT_CATEGORIES;
   });
 
-  // Site settings persistence
+  // Site settings persistence with auto-migration to 'مدونة المجتهد'
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
     try {
       const stored = localStorage.getItem('maqalat_site_settings');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.siteTitle === 'مَقَالَات' || !parsed.siteTitle) {
+          parsed.siteTitle = 'مدونة المجتهد';
+          parsed.siteSlogan = 'منصة الفكر والمعرفة الرصينة';
+          localStorage.setItem('maqalat_site_settings', JSON.stringify(parsed));
+        }
+        return parsed;
+      }
     } catch {}
     return DEFAULT_SITE_SETTINGS;
   });
@@ -99,6 +109,26 @@ export default function App() {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Layout View Mode (grid vs list)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    try {
+      return (localStorage.getItem('mujtahid_view_mode') as 'grid' | 'list') || 'grid';
+    } catch {
+      return 'grid';
+    }
+  });
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('mujtahid_view_mode', mode);
+    } catch {}
+  };
+
+  // Quick Knowledge Filter (Editorial Ticker)
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'all' | 'featured' | 'quick' | 'popular'>('all');
 
   // Bookmarks persistence
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -142,9 +172,21 @@ export default function App() {
   // Sync site title with document title
   useEffect(() => {
     if (siteSettings?.siteTitle) {
-      document.title = `${siteSettings.siteTitle} — ${siteSettings.siteSlogan || 'منصة الفكر والمعرفة'}`;
+      document.title = `${siteSettings.siteTitle} — ${siteSettings.siteSlogan || 'منصة الفكر والمعرفة الرصينة'}`;
     }
   }, [siteSettings]);
+
+  // Global Keyboard Shortcut: Cmd+K / Ctrl+K for Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Save articles helper
   const handleUpdateArticles = (updatedList: Article[]) => {
@@ -330,12 +372,12 @@ export default function App() {
   const filteredArticles = useMemo(() => {
     let list = [...articles];
 
-    // Filter by category
+    // Category filter
     if (selectedCategory !== 'الكل') {
       list = list.filter(a => a.category === selectedCategory);
     }
 
-    // Filter by search query
+    // Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(a => 
@@ -346,15 +388,26 @@ export default function App() {
       );
     }
 
-    // Sorting
-    list.sort((a, b) => {
-      if (sortBy === 'popular') return b.views - a.views;
-      if (sortBy === 'likes') return b.likes - a.likes;
-      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-    });
+    // Quick filter (Editorial Ticker)
+    if (activeQuickFilter === 'featured') {
+      list = list.filter(a => a.featured);
+    } else if (activeQuickFilter === 'quick') {
+      list = list.filter(a => a.readTime <= 5);
+    } else if (activeQuickFilter === 'popular') {
+      list = [...list].sort((a, b) => b.views - a.views);
+    }
+
+    // Sorting (if not already custom sorted)
+    if (activeQuickFilter !== 'popular') {
+      list.sort((a, b) => {
+        if (sortBy === 'popular') return b.views - a.views;
+        if (sortBy === 'likes') return b.likes - a.likes;
+        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+      });
+    }
 
     return list;
-  }, [articles, selectedCategory, searchQuery, sortBy]);
+  }, [articles, selectedCategory, searchQuery, sortBy, activeQuickFilter]);
 
   // Featured Article (first featured or top liked)
   const featuredArticle = useMemo(() => {
@@ -390,6 +443,7 @@ export default function App() {
         onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
         onExitAdmin={handleExitAdmin}
         siteSettings={siteSettings}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
       {/* Floating Admin Status Bar when Logged In as Admin */}
@@ -398,7 +452,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold">
               <Crown className="w-4 h-4 text-amber-500" />
-              <span>وضع المسؤول نشط: يمكنك تعديل وحذف المقالات مباشرة من البطاقات أو الدخول للوحة التحكم الشاملة.</span>
+              <span>وضع المسؤول نشط: يمكنك إدارة المقالات مباشرة من البطاقات أو الدخول للوحة التحكم الشاملة CMS.</span>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -407,7 +461,7 @@ export default function App() {
                   setCurrentView('admin');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="px-3 py-1 bg-amber-500 text-stone-950 rounded-lg font-bold hover:bg-amber-400 transition-colors"
+                className="px-3 py-1 bg-amber-500 text-stone-950 rounded-xl font-bold hover:bg-amber-400 transition-colors shadow-xs"
               >
                 فتح لوحة التحكم
               </button>
@@ -481,9 +535,10 @@ export default function App() {
           />
         ) : (
           /* Home Discovery View */
-          <main>
-            {/* Show Featured Article only if no specific search query or category filter */}
-            {selectedCategory === 'الكل' && !searchQuery.trim() && featuredArticle && (
+          <main className="py-4 sm:py-6">
+            
+            {/* Show Featured Article only if default view (no search and all categories) */}
+            {selectedCategory === 'الكل' && !searchQuery.trim() && activeQuickFilter === 'all' && featuredArticle && (
               <HeroFeatured
                 article={featuredArticle}
                 onSelectArticle={handleSelectArticle}
@@ -495,14 +550,31 @@ export default function App() {
               />
             )}
 
+            {/* Editorial Ticker: Quotes & Quick Knowledge Tabs */}
+            <EditorialTicker
+              totalArticlesCount={articles.length}
+              activeQuickFilter={activeQuickFilter}
+              onQuickFilter={(filter) => {
+                setActiveQuickFilter(filter);
+                if (filter !== 'all') {
+                  setSelectedCategory('الكل');
+                }
+              }}
+            />
+
             {/* Categories & Sorting Filters */}
             <CategoriesFilter
               categories={categories}
               selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
+              onSelectCategory={(cat) => {
+                setSelectedCategory(cat);
+                setActiveQuickFilter('all');
+              }}
               categoryCounts={categoryCounts}
               sortBy={sortBy}
               onSortChange={setSortBy}
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
             />
 
             {/* Search Results Summary (if searching) */}
@@ -510,7 +582,7 @@ export default function App() {
               <div className="my-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs sm:text-sm">
                   <Search className="w-4 h-4 text-amber-500" />
-                  <span>نتائج البحث عن: <strong>"{searchQuery}"</strong></span>
+                  <span>نتائج البحث في مدونة المجتهد عن: <strong>"{searchQuery}"</strong></span>
                   <span className="text-stone-400">({filteredArticles.length} مقال)</span>
                 </div>
                 <button
@@ -522,8 +594,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Articles Grid or Empty Search */}
-            <div className="py-8">
+            {/* Articles Grid or Compact List */}
+            <div className="py-6">
               {filteredArticles.length === 0 ? (
                 <div className="py-20 text-center max-w-md mx-auto">
                   <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-400 flex items-center justify-center mx-auto mb-3">
@@ -533,17 +605,34 @@ export default function App() {
                     لم نعثر على مقالات مطابقة
                   </h3>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
-                    جرّب البحث بكلمات مختلفة أو تصفح أحد الأقسام الأخرى.
+                    جرّب البحث بكلمات مختلفة أو اختر تصنيفاً آخر من أقسام مدونة المجتهد.
                   </p>
                   <button
                     onClick={() => {
                       setSelectedCategory('الكل');
                       setSearchQuery('');
+                      setActiveQuickFilter('all');
                     }}
                     className="px-4 py-2 rounded-xl bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950 text-xs font-semibold"
                   >
                     عرض جميع المقالات
                   </button>
+                </div>
+              ) : viewMode === 'list' ? (
+                <div className="space-y-4">
+                  {filteredArticles.map((article) => (
+                    <ArticleCard
+                      key={article.id}
+                      article={article}
+                      onSelectArticle={handleSelectArticle}
+                      isBookmarked={bookmarkedIds.includes(article.id)}
+                      onToggleBookmark={handleToggleBookmark}
+                      isAdmin={isAdmin}
+                      onEditArticle={(art, e) => handleEditArticle(art, e)}
+                      onDeleteArticle={(art, e) => handleDeleteArticle(art, e)}
+                      viewMode="list"
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -557,6 +646,7 @@ export default function App() {
                       isAdmin={isAdmin}
                       onEditArticle={(art, e) => handleEditArticle(art, e)}
                       onDeleteArticle={(art, e) => handleDeleteArticle(art, e)}
+                      viewMode="grid"
                     />
                   ))}
                 </div>
@@ -567,6 +657,36 @@ export default function App() {
         )}
 
       </div>
+
+      {/* Command Palette Spotlight Dialog (⌘K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        articles={articles}
+        categories={categories}
+        onSelectArticle={handleSelectArticle}
+        onSelectCategory={(cat) => {
+          setSelectedArticle(null);
+          setCurrentView('home');
+          setSelectedCategory(cat);
+          setActiveQuickFilter('all');
+        }}
+        onNavigate={(view) => {
+          setSelectedArticle(null);
+          setCurrentView(view);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onToggleTheme={() => setIsDarkMode(prev => !prev)}
+        isDarkMode={isDarkMode}
+        onOpenNewArticle={() => {
+          setEditingArticle(null);
+          setIsEditorOpen(true);
+        }}
+        isAdmin={isAdmin}
+        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+        viewMode={viewMode}
+        onToggleViewMode={() => handleViewModeChange(viewMode === 'grid' ? 'list' : 'grid')}
+      />
 
       {/* Editor Modal for Writing or Editing Articles */}
       <ArticleEditorModal
@@ -594,6 +714,7 @@ export default function App() {
           setSelectedArticle(null);
           setCurrentView('home');
           setSelectedCategory(cat);
+          setActiveQuickFilter('all');
         }}
         isAdmin={isAdmin}
         onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
