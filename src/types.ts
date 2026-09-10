@@ -1,73 +1,105 @@
-export type Category = string;
+export type Language = 'ar' | 'en';
 
-export interface Author {
-  id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  bio: string;
-}
+export type GameCategory = 'all' | 'vice-city' | 'racing' | 'action' | 'arcade' | 'strategy';
 
-export interface Comment {
-  id: string;
-  authorName: string;
-  authorAvatar?: string;
-  content: string;
-  createdAt: string;
-  likes: number;
-}
-
-export interface Article {
+export interface GameItem {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
-  content: string; // Structured text with markdown-like headings, quotes, and takeaways
-  coverImage: string;
-  category: Category;
-  tags: string[];
-  author: Author;
-  publishedAt: string;
-  readTime: number; // in minutes
-  views: number;
-  likes: number;
+  titleEn: string;
+  category: GameCategory;
+  description: string;
+  descriptionEn: string;
+  thumbnail: string;
+  badge?: string;
+  rating: number;
+  plays: number;
+  tag: string;
   featured?: boolean;
-  comments: Comment[];
 }
 
-export type ReadingTheme = 'light' | 'sepia' | 'dark';
-export type ReadingFontSize = 'sm' | 'md' | 'lg' | 'xl';
-export type ReadingFontFamily = 'arabic-modern' | 'arabic-traditional' | 'arabic-sans';
-
-export interface ReadingPreferences {
-  theme: ReadingTheme;
-  fontSize: ReadingFontSize;
-  fontFamily: ReadingFontFamily;
-}
-
-export interface AnnouncementBanner {
-  enabled: boolean;
-  text: string;
-  linkText?: string;
-  linkUrl?: string;
-}
-
-export interface SiteSettings {
-  siteTitle: string;
-  siteSlogan: string;
-  siteDescription: string;
-  announcement: AnnouncementBanner;
-  footerText: string;
-  enableComments: boolean;
-  enableAudioReader: boolean;
-  allowPublicSubmissions?: boolean;
-}
-
-export interface NewsletterSubscriber {
+export interface Weapon {
   id: string;
-  email: string;
-  subscribedAt: string;
+  name: string;
+  nameEn: string;
+  type: 'melee' | 'pistol' | 'smg' | 'rifle' | 'heavy';
+  damage: number;
+  fireRate: number;
+  ammo: number;
+  maxAmmo: number;
+  color: string;
+  range: number;
 }
 
-export type AdminTab = 'overview' | 'articles' | 'categories' | 'comments' | 'subscribers' | 'settings';
+export interface Vehicle {
+  id: string;
+  name: string;
+  type: 'supercar' | 'bike' | 'police' | 'tank' | 'copter';
+  topSpeed: number;
+  handling: number;
+  armor: number;
+  color: string;
+  secondaryColor?: string;
+}
 
+export interface CheatCode {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  category: 'health' | 'weapons' | 'vehicles' | 'wanted' | 'world';
+  descriptionAr: string;
+  descriptionEn: string;
+}
+
+export interface RadioStation {
+  id: string;
+  name: string;
+  frequency: string;
+  genre: string;
+  dj: string;
+  color: string;
+  accentColor: string;
+  currentTrack: string;
+  artist: string;
+}
+
+export interface MapPin {
+  id: string;
+  name: string;
+  nameEn: string;
+  district: string;
+  type: 'safehouse' | 'weapon' | 'paynspray' | 'package' | 'asset' | 'mission';
+  x: number; // 0 - 100%
+  y: number; // 0 - 100%
+  description: string;
+  reward?: string;
+}
+
+export interface GameMission {
+  id: string;
+  number: number;
+  title: string;
+  titleEn: string;
+  boss: string;
+  reward: number;
+  description: string;
+  objective: string;
+  district: string;
+  completed: boolean;
+}
+
+export interface ZipFileInfo {
+  name: string;
+  size: string;
+  rawBytes: number;
+  id: string;
+  shareCode: string;
+  md5: string;
+  gofileUrl: string;
+  extractedFilesCount: number;
+  extractedFiles: string[];
+  status: 'idle' | 'reading' | 'verified' | 'ready' | 'error';
+  errorMessage?: string;
+}
+
+export type ActiveTab = 'gta-game' | 'zip-loader' | 'cheats' | 'radio' | 'map' | 'arcade-games' | 'about';
