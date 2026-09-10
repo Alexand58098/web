@@ -1,6 +1,6 @@
 {
   "name": "Cucina: Modern Recipes & Cooking Guide",
-  "description": "An inspiring culinary website featuring curated recipes, interactive step-by-step cook mode with kitchen timers, dynamic ingredient serving scaler, pantry matcher, and culinary guides.",
+  "description": "NexusOS Web Desktop Operating System with dynamic Windows 10, Windows 7 Aero, and Ubuntu Linux environments, functional terminal, file explorer, Gemini AI copilot, and window manager.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
